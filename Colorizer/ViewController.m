@@ -11,6 +11,8 @@
 @interface ViewController ()
 
 @property (weak, nonatomic) IBOutlet UIImageView *photoImageView;
+@property (weak, nonatomic) IBOutlet UIButton *selectPhotoButton;
+@property (weak, nonatomic) IBOutlet UIButton *colorizeButton;
 @property (nonatomic) UIImagePickerController *imagePicker;
 
 @end
@@ -29,7 +31,10 @@
     _imagePicker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
 
     _photoImageView.contentMode = UIViewContentModeScaleAspectFit;
-    _photoImageView.image = [UIImage imageNamed:@"SpotifyLogoBlack"];
+    _photoImageView.image = [UIImage imageNamed:@"colin"];
+
+    _selectPhotoButton.layer.cornerRadius = 8.0f;
+    _colorizeButton.layer.cornerRadius = 8.0f;
 }
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<UIImagePickerControllerInfoKey,id> *)info {
@@ -53,30 +58,35 @@
 
     CIContext *context = [[CIContext alloc] initWithOptions:NULL];
 
+    CIColor *lightColor = [[CIColor alloc] initWithRed:0
+                                                 green:1.0
+                                                  blue:0.21
+                                                 alpha:1.0];
+
+    CIColor *darkColor = [[CIColor alloc] initWithRed:0.14
+                                                green:0.15
+                                                 blue:0.54
+                                                alpha:1.0];
+
     // MARK: Grayscale Filter
     CIFilter *grayscaleFilter = [CIFilter filterWithName:@"CIPhotoEffectMono"];
     [grayscaleFilter setValue:[CIImage imageWithCGImage:_photoImageView.image.CGImage]
                        forKey:kCIInputImageKey];
 
-    // MARK: Monochrome Filter
-    CIFilter *monochromeFilter = [CIFilter filterWithName:@"CIColorMonochrome"];
-    CIColor *lightColor = [[CIColor alloc] initWithRed:0
-                                                 green:1.0
-                                                  blue:0.21
-                                                 alpha:1.0];
-    [monochromeFilter setValue:grayscaleFilter.outputImage
-                        forKey:@"inputImage"];
-    [monochromeFilter setValue:lightColor
-                        forKey:@"inputColor"];
+    // MARK: Multiply filter
+    CIFilter *multiplyFilter = [CIFilter filterWithName:@"CIMultiplyBlendMode"];
+
+    CIImage *multiColorImage = [CIImage imageWithColor:lightColor];
+    [multiplyFilter setValue:grayscaleFilter.outputImage
+                     forKey:@"inputImage"];
+    [multiplyFilter setValue:multiColorImage
+                     forKey:@"inputBackgroundImage"];
 
     // MARK: Lighten filter
     CIFilter *lightenFilter = [CIFilter filterWithName:@"CILightenBlendMode"];
-    CIColor *darkColor = [[CIColor alloc] initWithRed:0.14
-                                                green:0.15
-                                                 blue:0.54
-                                                alpha:1.0];
+
     CIImage *colorImage = [CIImage imageWithColor:darkColor];
-    [lightenFilter setValue:monochromeFilter.outputImage
+    [lightenFilter setValue:multiplyFilter.outputImage
                      forKey:@"inputImage"];
     [lightenFilter setValue:colorImage
                      forKey:@"inputBackgroundImage"];
