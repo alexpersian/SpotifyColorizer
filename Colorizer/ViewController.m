@@ -37,7 +37,7 @@
         UIImage *pickedImage = [info valueForKey:UIImagePickerControllerOriginalImage];
         _photoImageView.image = pickedImage;
     } else {
-        NSLog(@"Error: Unable to find original image.");
+        NSLog(@"Error: Unable to access image.");
     }
 
     [self dismissViewControllerAnimated:YES completion:NULL];
@@ -51,12 +51,43 @@
 - (IBAction)tappedColorize:(id)sender {
     NSLog(@"Colorizing...");
 
-    // Grey scale the image
+    CIContext *context = [[CIContext alloc] initWithOptions:NULL];
 
-    // Apply color overlay to image
+    // MARK: Grayscale Filter
+    CIFilter *grayscaleFilter = [CIFilter filterWithName:@"CIPhotoEffectMono"];
+    [grayscaleFilter setValue:[CIImage imageWithCGImage:_photoImageView.image.CGImage]
+                       forKey:kCIInputImageKey];
 
-    // Display image back into image view
-    
+    // MARK: Monochrome Filter
+    CIFilter *monochromeFilter = [CIFilter filterWithName:@"CIColorMonochrome"];
+    CIColor *lightColor = [[CIColor alloc] initWithRed:0
+                                                 green:1.0
+                                                  blue:0.21
+                                                 alpha:1.0];
+    [monochromeFilter setValue:grayscaleFilter.outputImage
+                        forKey:@"inputImage"];
+    [monochromeFilter setValue:lightColor
+                        forKey:@"inputColor"];
+
+    // MARK: Lighten filter
+    CIFilter *lightenFilter = [CIFilter filterWithName:@"CILightenBlendMode"];
+    CIColor *darkColor = [[CIColor alloc] initWithRed:0.14
+                                                green:0.15
+                                                 blue:0.54
+                                                alpha:1.0];
+    CIImage *colorImage = [CIImage imageWithColor:darkColor];
+    [lightenFilter setValue:monochromeFilter.outputImage
+                     forKey:@"inputImage"];
+    [lightenFilter setValue:colorImage
+                     forKey:@"inputBackgroundImage"];
+
+    // Rect for final image is provided by monochrome image since the color-based
+    // image generated at the lighten step is of infinite size.
+    struct CGImage *cgi = [context createCGImage:lightenFilter.outputImage
+                                        fromRect:grayscaleFilter.outputImage.extent];
+
+    // Update the imageview with the newly filtered image.
+    _photoImageView.image = [UIImage imageWithCGImage:cgi];
 }
 
 @end
