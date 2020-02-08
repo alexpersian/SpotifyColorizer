@@ -13,7 +13,14 @@
 @property (weak, nonatomic) IBOutlet UIImageView *photoImageView;
 @property (weak, nonatomic) IBOutlet UIButton *selectPhotoButton;
 @property (weak, nonatomic) IBOutlet UIButton *colorizeButton;
+@property (weak, nonatomic) IBOutlet UISegmentedControl *colorPicker;
+
 @property (nonatomic) UIImagePickerController *imagePicker;
+@property (nonatomic) UIImage *selectedImage;
+@property (nonatomic) CIColor *lightColor;
+@property (nonatomic) CIColor *darkColor;
+
+- (void)colorSegmentChanged:(id) sender;
 
 @end
 
@@ -31,21 +38,55 @@
     _imagePicker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
 
     _photoImageView.contentMode = UIViewContentModeScaleAspectFit;
-    _photoImageView.image = [UIImage imageNamed:@"colin"];
 
     _selectPhotoButton.layer.cornerRadius = 8.0f;
     _colorizeButton.layer.cornerRadius = 8.0f;
+
+    [_colorPicker addTarget:self
+                     action:@selector(colorSegmentChanged:)
+           forControlEvents:UIControlEventValueChanged];
+
+    _lightColor = [[CIColor alloc] initWithRed:0.33 green:0.98 blue:0.25 alpha:1.0];
+    _darkColor = [[CIColor alloc] initWithRed:0.09 green:0.14 blue:0.32 alpha:1.0];
 }
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<UIImagePickerControllerInfoKey,id> *)info {
     if ([info valueForKey:UIImagePickerControllerOriginalImage] != NULL) {
         UIImage *pickedImage = [info valueForKey:UIImagePickerControllerOriginalImage];
+        _selectedImage = pickedImage;
         _photoImageView.image = pickedImage;
     } else {
         NSLog(@"Error: Unable to access image.");
     }
 
     [self dismissViewControllerAnimated:YES completion:NULL];
+}
+
+- (void)colorSegmentChanged:(id)sender {
+    switch (_colorPicker.selectedSegmentIndex) {
+        case 0:
+            // Green and navy
+            _lightColor = [[CIColor alloc] initWithRed:0.33 green:0.98 blue:0.25 alpha:1.0];
+            _darkColor = [[CIColor alloc] initWithRed:0.09 green:0.14 blue:0.32 alpha:1.0];
+            break;
+        case 1:
+            // Red and navy
+            _lightColor = [[CIColor alloc] initWithRed:0.89 green:0.00 blue:0.15 alpha:1.0];
+            _darkColor = [[CIColor alloc] initWithRed:0.09 green:0.14 blue:0.32 alpha:1.0];
+            break;
+        case 2:
+            // Blue and scarlet
+            _lightColor = [[CIColor alloc] initWithRed:0.55 green:0.94 blue:0.85 alpha:1.0];
+            _darkColor = [[CIColor alloc] initWithRed:0.47 green:0.04 blue:0.15 alpha:1.0];
+            break;
+        case 3:
+            // Yellow and navy
+            _lightColor = [[CIColor alloc] initWithRed:0.95 green:0.90 blue:0.13 alpha:1.0];
+            _darkColor = [[CIColor alloc] initWithRed:0.09 green:0.14 blue:0.32 alpha:1.0];
+            break;
+        default:
+            break;
+    }
 }
 
 - (IBAction)tappedSelectPhoto:(id)sender {
@@ -56,27 +97,20 @@
 - (IBAction)tappedColorize:(id)sender {
     NSLog(@"Colorizing...");
 
+    // Store the original orientation and scale to reapply it to the CGImage below.
+    UIImageOrientation originalOrientation = _selectedImage.imageOrientation;
+    CGFloat originalScale = _selectedImage.scale;
+
     CIContext *context = [[CIContext alloc] initWithOptions:NULL];
-
-    CIColor *lightColor = [[CIColor alloc] initWithRed:0
-                                                 green:1.0
-                                                  blue:0.21
-                                                 alpha:1.0];
-
-    CIColor *darkColor = [[CIColor alloc] initWithRed:0.14
-                                                green:0.15
-                                                 blue:0.54
-                                                alpha:1.0];
 
     // MARK: Grayscale Filter
     CIFilter *grayscaleFilter = [CIFilter filterWithName:@"CIPhotoEffectMono"];
-    [grayscaleFilter setValue:[CIImage imageWithCGImage:_photoImageView.image.CGImage]
+    [grayscaleFilter setValue:[CIImage imageWithCGImage:_selectedImage.CGImage]
                        forKey:kCIInputImageKey];
 
     // MARK: Multiply filter
     CIFilter *multiplyFilter = [CIFilter filterWithName:@"CIMultiplyBlendMode"];
-
-    CIImage *multiColorImage = [CIImage imageWithColor:lightColor];
+    CIImage *multiColorImage = [CIImage imageWithColor:_lightColor];
     [multiplyFilter setValue:grayscaleFilter.outputImage
                      forKey:@"inputImage"];
     [multiplyFilter setValue:multiColorImage
@@ -84,8 +118,7 @@
 
     // MARK: Lighten filter
     CIFilter *lightenFilter = [CIFilter filterWithName:@"CILightenBlendMode"];
-
-    CIImage *colorImage = [CIImage imageWithColor:darkColor];
+    CIImage *colorImage = [CIImage imageWithColor:_darkColor];
     [lightenFilter setValue:multiplyFilter.outputImage
                      forKey:@"inputImage"];
     [lightenFilter setValue:colorImage
@@ -97,7 +130,9 @@
                                         fromRect:grayscaleFilter.outputImage.extent];
 
     // Update the imageview with the newly filtered image.
-    _photoImageView.image = [UIImage imageWithCGImage:cgi];
+    _photoImageView.image = [UIImage imageWithCGImage:cgi
+                                                scale:originalScale
+                                          orientation:originalOrientation];
 }
 
 @end
