@@ -21,6 +21,7 @@
 @property (nonatomic) CIColor *darkColor;
 
 - (void)colorSegmentChanged:(id) sender;
+- (void)savePhoto:(UIGestureRecognizer *) gestureRecognizer;
 
 @end
 
@@ -48,6 +49,10 @@
 
     _lightColor = [[CIColor alloc] initWithRed:0.33 green:0.98 blue:0.25 alpha:1.0];
     _darkColor = [[CIColor alloc] initWithRed:0.09 green:0.14 blue:0.32 alpha:1.0];
+
+    UIGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self
+                                                                                   action:@selector(savePhoto:)];
+    [_photoImageView addGestureRecognizer:longPress];
 }
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<UIImagePickerControllerInfoKey,id> *)info {
@@ -89,6 +94,32 @@
     }
 }
 
+- (void)savePhoto:(UIGestureRecognizer*)gesture {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:NULL
+                                                                   message:NULL
+                                                            preferredStyle:UIAlertControllerStyleActionSheet];
+
+    UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"Save Photo"
+                                                            style:UIAlertActionStyleDefault
+                                                          handler:^(UIAlertAction * action) {
+        UIImageWriteToSavedPhotosAlbum(self->_photoImageView.image, NULL, NULL, NULL);
+    }];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel"
+                                                           style:UIAlertActionStyleCancel
+                                                         handler:^(UIAlertAction * action) {}];
+
+    [alert addAction:defaultAction];
+    [alert addAction:cancelAction];
+
+    switch (gesture.state) {
+        case UIGestureRecognizerStateBegan:
+            [self presentViewController:alert animated:YES completion:nil];
+            break;
+        default:
+            break;
+    }
+}
+
 - (IBAction)tappedSelectPhoto:(id)sender {
     NSLog(@"Opening image picker...");
     [self presentViewController:_imagePicker animated:YES completion:NULL];
@@ -112,9 +143,9 @@
     CIFilter *multiplyFilter = [CIFilter filterWithName:@"CIMultiplyBlendMode"];
     CIImage *multiColorImage = [CIImage imageWithColor:_lightColor];
     [multiplyFilter setValue:grayscaleFilter.outputImage
-                     forKey:@"inputImage"];
+                      forKey:@"inputImage"];
     [multiplyFilter setValue:multiColorImage
-                     forKey:@"inputBackgroundImage"];
+                      forKey:@"inputBackgroundImage"];
 
     // MARK: Lighten filter
     CIFilter *lightenFilter = [CIFilter filterWithName:@"CILightenBlendMode"];
