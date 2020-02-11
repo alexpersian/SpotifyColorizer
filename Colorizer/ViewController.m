@@ -20,8 +20,10 @@
 @property (nonatomic) CIColor *lightColor;
 @property (nonatomic) CIColor *darkColor;
 
-- (void)colorSegmentChanged:(id) sender;
-- (void)savePhoto:(UIGestureRecognizer *) gestureRecognizer;
+- (IBAction)savePhoto:(UIGestureRecognizer *)gestureRecognizer;
+- (IBAction)colorSegmentChanged:(id)sender;
+- (IBAction)tappedSelectPhoto:(id)sender;
+- (IBAction)tappedColorize:(id)sender;
 
 @end
 
@@ -43,12 +45,18 @@
     _selectPhotoButton.layer.cornerRadius = 8.0f;
     _colorizeButton.layer.cornerRadius = 8.0f;
 
+    _lightColor = [[CIColor alloc] initWithRed:0.33 green:0.98 blue:0.25 alpha:1.0];
+    _darkColor = [[CIColor alloc] initWithRed:0.09 green:0.14 blue:0.32 alpha:1.0];
+
+    [_selectPhotoButton addTarget:self
+                           action:@selector(tappedSelectPhoto:)
+                 forControlEvents:UIControlEventValueChanged];
+    [_colorizeButton addTarget:self
+                        action:@selector(tappedColorize:)
+              forControlEvents:UIControlEventValueChanged];
     [_colorPicker addTarget:self
                      action:@selector(colorSegmentChanged:)
            forControlEvents:UIControlEventValueChanged];
-
-    _lightColor = [[CIColor alloc] initWithRed:0.33 green:0.98 blue:0.25 alpha:1.0];
-    _darkColor = [[CIColor alloc] initWithRed:0.09 green:0.14 blue:0.32 alpha:1.0];
 
     UIGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self
                                                                                    action:@selector(savePhoto:)];
@@ -56,8 +64,8 @@
 }
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<UIImagePickerControllerInfoKey,id> *)info {
-    if ([info valueForKey:UIImagePickerControllerOriginalImage] != NULL) {
-        UIImage *pickedImage = [info valueForKey:UIImagePickerControllerOriginalImage];
+    UIImage *pickedImage = [info valueForKey:UIImagePickerControllerOriginalImage];
+    if (pickedImage != NULL) {
         _selectedImage = pickedImage;
         _photoImageView.image = pickedImage;
     } else {
@@ -67,7 +75,33 @@
     [self dismissViewControllerAnimated:YES completion:NULL];
 }
 
-- (void)colorSegmentChanged:(id)sender {
+- (IBAction)savePhoto:(UIGestureRecognizer*)gesture {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:NULL
+                                                                   message:NULL
+                                                            preferredStyle:UIAlertControllerStyleActionSheet];
+
+    UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"Save Photo"
+                                                            style:UIAlertActionStyleDefault
+                                                          handler:^(UIAlertAction * action) {
+        UIImageWriteToSavedPhotosAlbum(self->_photoImageView.image, NULL, NULL, NULL);
+    }];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel"
+                                                           style:UIAlertActionStyleCancel
+                                                         handler:^(UIAlertAction * action) {}];
+
+    [alert addAction:defaultAction];
+    [alert addAction:cancelAction];
+
+    switch (gesture.state) {
+        case UIGestureRecognizerStateBegan:
+            [self presentViewController:alert animated:YES completion:nil];
+            break;
+        default:
+            break;
+    }
+}
+
+- (IBAction)colorSegmentChanged:(id)sender {
     switch (_colorPicker.selectedSegmentIndex) {
         case 0:
             // Green and navy
@@ -94,41 +128,13 @@
     }
 }
 
-- (void)savePhoto:(UIGestureRecognizer*)gesture {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:NULL
-                                                                   message:NULL
-                                                            preferredStyle:UIAlertControllerStyleActionSheet];
-
-    UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"Save Photo"
-                                                            style:UIAlertActionStyleDefault
-                                                          handler:^(UIAlertAction * action) {
-        UIImageWriteToSavedPhotosAlbum(self->_photoImageView.image, NULL, NULL, NULL);
-    }];
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel"
-                                                           style:UIAlertActionStyleCancel
-                                                         handler:^(UIAlertAction * action) {}];
-
-    [alert addAction:defaultAction];
-    [alert addAction:cancelAction];
-
-    switch (gesture.state) {
-        case UIGestureRecognizerStateBegan:
-            [self presentViewController:alert animated:YES completion:nil];
-            break;
-        default:
-            break;
-    }
-}
-
 - (IBAction)tappedSelectPhoto:(id)sender {
-    NSLog(@"Opening image picker...");
     [self presentViewController:_imagePicker animated:YES completion:NULL];
 }
 
 - (IBAction)tappedColorize:(id)sender {
-    NSLog(@"Colorizing...");
-
     // Store the original orientation and scale to reapply it to the CGImage below.
+    // If we don't do this then the output image may be rotated or scaled incorrectly.
     UIImageOrientation originalOrientation = _selectedImage.imageOrientation;
     CGFloat originalScale = _selectedImage.scale;
 
@@ -143,24 +149,26 @@
     CIFilter *multiplyFilter = [CIFilter filterWithName:@"CIMultiplyBlendMode"];
     CIImage *multiColorImage = [CIImage imageWithColor:_lightColor];
     [multiplyFilter setValue:grayscaleFilter.outputImage
-                      forKey:@"inputImage"];
+                      forKey:kCIInputImageKey];
     [multiplyFilter setValue:multiColorImage
-                      forKey:@"inputBackgroundImage"];
+                      forKey:kCIInputBackgroundImageKey];
 
     // MARK: Lighten filter
     CIFilter *lightenFilter = [CIFilter filterWithName:@"CILightenBlendMode"];
     CIImage *colorImage = [CIImage imageWithColor:_darkColor];
     [lightenFilter setValue:multiplyFilter.outputImage
-                     forKey:@"inputImage"];
+                     forKey:kCIInputImageKey];
     [lightenFilter setValue:colorImage
-                     forKey:@"inputBackgroundImage"];
+                     forKey:kCIInputBackgroundImageKey];
 
-    // Rect for final image is provided by monochrome image since the color-based
-    // image generated at the lighten step is of infinite size.
+    // Rect for final image is provided by the grayscale image since the solid-color
+    // images generated at the multiply and lighten steps are of infinite size.
+    // https://developer.apple.com/documentation/coreimage/ciimage/1547012-imagewithcolor
     struct CGImage *cgi = [context createCGImage:lightenFilter.outputImage
                                         fromRect:grayscaleFilter.outputImage.extent];
 
-    // Update the imageview with the newly filtered image.
+    // Update the imageview with the new image with filters applied. Ensuring that original
+    // orientation and scale are respected.
     _photoImageView.image = [UIImage imageWithCGImage:cgi
                                                 scale:originalScale
                                           orientation:originalOrientation];

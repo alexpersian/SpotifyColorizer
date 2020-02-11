@@ -55,9 +55,6 @@
                                         <state key="normal" title="Select Photo">
                                             <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         </state>
-                                        <connections>
-                                            <action selector="tappedSelectPhoto:" destination="BYZ-38-t0r" eventType="touchUpInside" id="vWD-Ly-DCv"/>
-                                        </connections>
                                     </button>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="21k-vv-b2z">
                                         <rect key="frame" x="201" y="0.0" width="193" height="50"/>
@@ -66,9 +63,6 @@
                                         <state key="normal" title="Colorize">
                                             <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         </state>
-                                        <connections>
-                                            <action selector="tappedColorize:" destination="BYZ-38-t0r" eventType="touchUpInside" id="lff-Nt-iJa"/>
-                                        </connections>
                                     </button>
                                 </subviews>
                                 <constraints>
