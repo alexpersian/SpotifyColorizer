@@ -65,25 +65,25 @@
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<UIImagePickerControllerInfoKey,id> *)info {
     UIImage *pickedImage = [info valueForKey:UIImagePickerControllerOriginalImage];
-    if (pickedImage != NULL) {
+    if (pickedImage) {
         _selectedImage = pickedImage;
         _photoImageView.image = pickedImage;
     } else {
         NSLog(@"Error: Unable to access image.");
     }
 
-    [self dismissViewControllerAnimated:YES completion:NULL];
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (IBAction)savePhoto:(UIGestureRecognizer*)gesture {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:NULL
-                                                                   message:NULL
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil
+                                                                   message:nil
                                                             preferredStyle:UIAlertControllerStyleActionSheet];
 
     UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"Save Photo"
                                                             style:UIAlertActionStyleDefault
                                                           handler:^(UIAlertAction * action) {
-        UIImageWriteToSavedPhotosAlbum(self->_photoImageView.image, NULL, NULL, NULL);
+        UIImageWriteToSavedPhotosAlbum(self->_photoImageView.image, nil, nil, nil);
     }];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel"
                                                            style:UIAlertActionStyleCancel
@@ -129,7 +129,7 @@
 }
 
 - (IBAction)tappedSelectPhoto:(id)sender {
-    [self presentViewController:_imagePicker animated:YES completion:NULL];
+    [self presentViewController:_imagePicker animated:YES completion:nil];
 }
 
 - (IBAction)tappedColorize:(id)sender {
@@ -138,7 +138,7 @@
     UIImageOrientation originalOrientation = _selectedImage.imageOrientation;
     CGFloat originalScale = _selectedImage.scale;
 
-    CIContext *context = [[CIContext alloc] initWithOptions:NULL];
+    CIContext *context = [[CIContext alloc] initWithOptions:nil];
 
     // MARK: Grayscale Filter
     CIFilter *grayscaleFilter = [CIFilter filterWithName:@"CIPhotoEffectMono"];
