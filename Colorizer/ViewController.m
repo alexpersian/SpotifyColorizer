@@ -50,10 +50,10 @@
 
     [_selectPhotoButton addTarget:self
                            action:@selector(tappedSelectPhoto:)
-                 forControlEvents:UIControlEventValueChanged];
+                 forControlEvents:UIControlEventTouchUpInside];
     [_colorizeButton addTarget:self
                         action:@selector(tappedColorize:)
-              forControlEvents:UIControlEventValueChanged];
+              forControlEvents:UIControlEventTouchUpInside];
     [_colorPicker addTarget:self
                      action:@selector(colorSegmentChanged:)
            forControlEvents:UIControlEventValueChanged];
