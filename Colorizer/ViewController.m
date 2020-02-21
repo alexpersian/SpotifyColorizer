@@ -45,7 +45,7 @@
     _selectPhotoButton.layer.cornerRadius = 8.0f;
     _colorizeButton.layer.cornerRadius = 8.0f;
 
-    _lightColor = [[CIColor alloc] initWithRed:0.33 green:0.98 blue:0.25 alpha:1.0];
+    _lightColor = [[CIColor alloc] initWithRed:0.15 green:0.89 blue:0.47 alpha:1.0];
     _darkColor = [[CIColor alloc] initWithRed:0.09 green:0.14 blue:0.32 alpha:1.0];
 
     [_selectPhotoButton addTarget:self
@@ -105,7 +105,7 @@
     switch (_colorPicker.selectedSegmentIndex) {
         case 0:
             // Green and navy
-            _lightColor = [[CIColor alloc] initWithRed:0.33 green:0.98 blue:0.25 alpha:1.0];
+            _lightColor = [[CIColor alloc] initWithRed:0.15 green:0.89 blue:0.47 alpha:1.0];
             _darkColor = [[CIColor alloc] initWithRed:0.09 green:0.14 blue:0.32 alpha:1.0];
             break;
         case 1:
